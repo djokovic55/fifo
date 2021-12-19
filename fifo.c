@@ -17,9 +17,10 @@ static struct class *my_class;
 static struct device *my_device;
 static struct cdev *my_cdev;
 
+int flag = 0;
 int fifo[16];
-int pos_w = 0;
-int pos_r = 0 ;
+int pr = 0;
+int pw = 0 ;
 int endRead = 0;
 
 int fifo_open(struct inode *pinode, struct file *pfile);
@@ -58,22 +59,43 @@ ssize_t fifo_read(struct file *pfile, char __user *buffer, size_t length, loff_t
                 return 0;
         }
 
-        if(pos > 0)
-        {
-                //promena 
-                pos --;
-                len = scnprintf(buff, BUFF_SIZE, "%d ", fifo[pos]);
-                ret = copy_to_user(buffer, buff, len);
-                if(ret)
-                        return -EFAULT;
-                printk(KERN_INFO "Succesfully read\n");
-                endRead = 1;
-        }
-        else
-        {
-                        printk(KERN_WARNING "Lifo is empty\n");
-        }
+	if(!flag)
+	{
 
+		if(pr < pw)
+		{
+			len = scnprintf(buff, BUFF_SIZE, "%d ", fifo[pos]);
+			ret = copy_to_user(buffer, buff, len);
+			if(ret)
+				return -EFAULT;
+			printk(KERN_INFO "Succesfully read\n");
+			endRead = 1;
+			//promena
+			pr++;
+		}
+		else
+		{
+				printk(KERN_WARNING "Fifo is empty\n");
+		}
+	}
+	else 
+	{
+		
+			if(pw == 15)
+			{
+				pw = 0;
+				flag = 1;
+			}
+	
+			len = scnprintf(buff, BUFF_SIZE, "%d ", fifo[pos]);
+			ret = copy_to_user(buffer, buff, len);
+			if(ret)
+				return -EFAULT;
+			printk(KERN_INFO "Succesfully read\n");
+			endRead = 1;
+			//promena
+			pr++;
+	}
         return len;
 }
 ssize_t fifo_write(struct file *pfile, const char __user *buffer, size_t length, loff_t *offset)
@@ -87,24 +109,59 @@ ssize_t fifo_write(struct file *pfile, const char __user *buffer, size_t length,
                 return -EFAULT;
         buff[length-1] = '\0';
 
-        if(pos<10)
+        if(pw < pr)
         {
-                ret = sscanf(buff,"%d",&value);
-                if(ret==1)//one parameter parsed in sscanf
-                {
-                        printk(KERN_INFO "Succesfully wrote value %d", value);
-                        fifo[pos] = value;
-                        pos=pos+1;
-                }
-                else
-                {
-                        printk(KERN_WARNING "Wrong command format\n");
-                }
-        }
+				if(flag)
+				{
+					//UPIS
+					ret = sscanf(buff,"%d",&value);
+					if(ret==1)//one parameter parsed in sscanf
+					{
+						printk(KERN_INFO "Succesfully wrote value %d", value);
+						fifo[pw] = value;
+					}
+					else
+					{
+						printk(KERN_WARNING "Wrong command format\n");
+					}
+					if(pw == 15)
+					{
+						pw = 0;
+						flag = 1;
+					}
+					else 
+						pw++;
+				}
+				else
+					printk(KERN_WARNING "Fifo is full\n");
+		
         else
         {
-                printk(KERN_WARNING "Lifo is full\n");
-        }
+				if(!flag)
+				{
+					//UPIS
+					ret = sscanf(buff,"%d",&value);
+					if(ret==1)//one parameter parsed in sscanf
+					{
+						printk(KERN_INFO "Succesfully wrote value %d", value);
+						fifo[pw] = value;
+					}
+					else
+					{
+						printk(KERN_WARNING "Wrong command format\n");
+					}
+
+					if(pw == 15)
+					{
+						pw = 0;
+						flag = 1;
+					}	
+					else
+						pw++;
+				}
+				else 
+					printk(KERN_WARNING "Fifo is full\n");
+		}
 
         return length;
 }
