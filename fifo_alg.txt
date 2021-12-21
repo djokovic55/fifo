@@ -1,0 +1,81 @@
+
+flag = 0;
+pw = 0;
+pr = 0;
+void write()
+{
+	/* 
+	if(pw >= pr && flag == 0)
+	{
+		//ide upis
+		if(pw == 4)
+		{
+			pw = 0;
+			flag = 1;
+		}
+		else
+			pw++;
+		
+
+	} 
+	else if(flag == 1 && pw < pr)
+	{	
+		//ide upis
+		pw++;
+		
+	} */
+	
+	if(pw < pr)
+	{
+		if(flag)
+		{
+			//ide upis
+			pw++;
+		}
+		else 
+			//fifo je pun
+	}
+	else
+	{
+		if(!flag)
+		{
+			//ide upis
+			if(pw == 4)
+			{
+				pw = 0;
+				flag = 1;
+			}
+			else
+				pw++;
+			
+		}
+		else 
+			//fifo je pun
+	}
+}
+
+void read() 
+{
+	if(!flag)
+		if(pr < pw) // samo manje jer ako su jednaki,
+		{			//znaci da nije bilo upisa na toj lokaciji
+			//ide citanje
+			pr++;
+		
+		} 
+		else 
+			//fifo je prazan
+	else
+	{	
+		
+		if(pr == 4)
+		{
+			pr = 0;
+			flag = 0;
+		}
+		//ide citanje
+		pw++;
+		
+	}
+
+}
