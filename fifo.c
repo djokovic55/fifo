@@ -72,7 +72,7 @@ ssize_t fifo_read(struct file *pfile, char __user *buffer, size_t length, loff_t
 			
 		if(down_interruptible(&sem))
 			return -ERESTARTSYS;
-		while(pr == 0)
+		while(pr >= pw)
 		{
 			up(&sem);
 			if(wait_event_interruptible(writeQ,(pr < pw)))
@@ -135,7 +135,7 @@ ssize_t fifo_write(struct file *pfile, const char __user *buffer, size_t length,
         {
 				if(down_interruptible(&sem))
 					return -ERESTARTSYS;
-				while(pw == 0)
+				while(!flag)
 				{
 					up(&sem);
 					if(wait_event_interruptible(writeQ,(flag)))
@@ -176,7 +176,7 @@ ssize_t fifo_write(struct file *pfile, const char __user *buffer, size_t length,
 				
 				if(down_interruptible(&sem))
 					return -ERESTARTSYS;
-				while(pw == 0)
+				while(flag)
 				{
 					up(&sem);
 					if(wait_event_interruptible(writeQ,(!flag)))
